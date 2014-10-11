@@ -47,6 +47,3 @@
            (if (string=? x y)
                (print "ok\n")
                (error (string-append "\nfailed!\n\tx was: " x "\n\ty was: " y)))))
-
-
-(assert-eq "a" "b")
