@@ -1072,9 +1072,3 @@
 ;; It turns out that figuring out how to merge the two streams is not trivial.
 ;; We still have to guarantee that things happen in the correct order, so we
 ;; have the same issue as before.
-
-
-
-
-
-(print "ok!\n\nsuccess!\n")
