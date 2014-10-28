@@ -88,7 +88,7 @@
                                             (lambda-body exp)
                                             env))
         ((begin? exp)       (eval-sequence (begin-actions exp) env)) ;; execute all expressions in order
-        ((cond? exp)        (eval (cond-if exp) env))                ;; transformed into nested if expressions and then evaluated
+        ((cond? exp)        (eval (cond->if exp) env))               ;; transformed into nested if expressions and then evaluated
         ((application? exp) (apply (eval (operator exp) env)         ;; evaluate the operator/operands, and pass this off to apply
                                    (list-of-values (operands exp) env)))
         ((let? exp)         (eval (let->combination exp) env))       ;; implemented in Ex 4.6
@@ -250,9 +250,9 @@
 (define (if? exp)
   (tagged-list? exp 'if))
 
-(define (if-predicate) (cadr exp))
-(define (if-consequent) (caddr exp))
-(define (if-alternative)
+(define (if-predicate exp) (cadr exp))
+(define (if-consequent exp) (caddr exp))
+(define (if-alternative exp)
   (if (not (null? (cdddr exp)))
       (cadddr exp)
       'false))
@@ -328,7 +328,7 @@
   (eq? (cond-predicate clause) 'else))
 
 (define (cond-predicate clause) (car clause))
-(define (cond-action clause) (cdr clause))
+(define (cond-actions clause) (cdr clause))
 
 (define (cond->if exp)
   (expand-cond-clauses (cond-clauses exp)))

@@ -19,7 +19,7 @@
                                             (lambda-body exp)
                                             env))
         ((begin? exp)       (eval-sequence (begin-actions exp) env))
-        ((cond? exp)        (eval (cond-if exp) env))
+        ((cond? exp)        (eval (cond->if exp) env))
         ((application? exp) (apply (eval (operator exp) env)
                                    (list-of-values (operands exp) env)))
         ((let? exp)         (eval (let->combination exp) env))
@@ -42,14 +42,12 @@
               (eval-sequence (rest-exps exps) env))))
 
 (define (eval-assignment exp env)
-  (print "evalling assignment...")
   (set-variable-value! (assignment-variable exp)
                        (eval (assignment-value exp) env)
                        env)
   'ok)
 
 (define (eval-definition exp env)
-  (print "evalling def...")
   (define-variable! (assignment-variable exp)
                     (eval (assignment-value exp) env)
                     env)
@@ -90,18 +88,17 @@
   (tagged-list? exp 'define))
 
 (define (definition-variable exp)
-  (if (symbol? (cadr exp)) ;; if the second elt is a symbol, we have (define <var> <value>)
-      (cadr exp)           ;; (car (cdr exp)) == (car (<var> <value>)) == <var>
-      (caadr exp)))        ;; if the second elt is a list, we have (define (<var> <ps>) <body>)
-                           ;; (car (car (cdr exp))) == (car (car ((<var> <ps>) <body>))) == (car (<var> <ps>)) == <var>
+  (if (symbol? (cadr exp))
+      (cadr exp)
+      (caadr exp)))
+
 
 
 (define (definition-value exp)
   (if (symbol? (cadr exp))
-      (caddr exp)                ;; (car (cdr (cdr exp))) == (car (cdr (<var> <value>))) == (car (<value>)) == <value>
-      (begin (print "making lambda\n\n")
-             (make-lambda (cdadr exp)   ;; (cdr (car (cdr exp))) == (cdr (car ((<var> <ps>) <body>))) == (cdr (<var> <ps>)) == <ps>
-                          (cddr exp))))) ;; (cdr (cdr exp)) == (cdr ((<var> <ps>) <body>))) == <body>
+      (caddr exp)
+      (make-lambda (cdadr exp)
+                   (cddr exp))))
 
 (define (lambda? exp)
   (tagged-list? exp 'lambda))
@@ -115,12 +112,12 @@
 (define (if? exp)
   (tagged-list? exp 'if))
 
-(define (if-predicate) (cadr exp))
-(define (if-consequent) (caddr exp))
-(define (if-alternative)
+(define (if-predicate exp) (cadr exp))
+(define (if-consequent exp) (caddr exp))
+(define (if-alternative exp)
   (if (not (null? (cdddr exp)))
       (cadddr exp)
-      'false))
+      #f))
 
 (define (make-if pred con alt)
   (list 'if pred con alt))
@@ -155,14 +152,14 @@
   (eq? (cond-predicate clause) 'else))
 
 (define (cond-predicate clause) (car clause))
-(define (cond-action clause) (cdr clause))
+(define (cond-actions clause) (cdr clause))
 
 (define (cond->if exp)
   (expand-cond-clauses (cond-clauses exp)))
 
 (define (expand-cond-clauses clauses)
   (if (null? clauses)
-      'false
+      #f
       (let ((first (car clauses))
             (rest (cdr clauses)))
         (if (cond-else-clause? first)
@@ -254,8 +251,7 @@
   (not (false? x)))
 
 (define (false? x)
-  (eq? x false))
-
+  (eq? x #f))
 
 (define (apply-primitive-procedure proc args)
   (apply-in-underlying-scheme (primitive-implementation proc)
@@ -338,8 +334,12 @@
         (list 'cddr cddr)
         (list 'cons cons)
         (list 'null? null?)
+        (list 'list list)
+        (list '= =)
         (list '+ +)
         (list '* *)
+        (list '- -)
+        (list '/ /)
         (list 'print print)
         ))
 
